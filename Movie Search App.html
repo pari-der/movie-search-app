@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieFlix - Your Movie Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ff4d4d, #ff8533);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-container {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        input[type="text"] {
+            width: 60%;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(255, 77, 77, 0.3);
+        }
+
+        button {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #ff4d4d, #ff8533);
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 77, 77, 0.4);
+        }
+
+        #movieList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+            padding: 1rem;
+        }
+
+        .movie-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 350px;
+            object-fit: cover;
+        }
+
+        .movie-info {
+            padding: 1.5rem;
+        }
+
+        .movie-info h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .movie-info p {
+            color: #cccccc;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .search-container {
+                flex-direction: column;
+            }
+
+            input[type="text"] {
+                width: 100%;
+            }
+
+            #movieList {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MovieFlix</h1>
+            <p>Discover your next favorite movie</p>
+        </header>
+
+        <div class="search-container">
+            <input type="text" id="movieSearch" placeholder="Search for movies...">
+            <button onclick="searchMovies()">Search</button>
+        </div>
+
+        <div id="movieList"></div>
+    </div>
+
+    <script>
+        const API_KEY = '6e049927'; // New OMDB API key - should work
+        const movieSearch = document.getElementById('movieSearch');
+        const movieList = document.getElementById('movieList');
+
+        async function searchMovies() {
+            const searchTerm = movieSearch.value.trim();
+            
+            if (searchTerm.length < 2) {
+                alert('Please enter at least 2 characters');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&s=${searchTerm}`);
+                const data = await response.json();
+
+                if (data.Response === 'True') {
+                    displayMovies(data.Search);
+                } else {
+                    movieList.innerHTML = `
+                        <div style="text-align: center; grid-column: 1/-1;">
+                            <h2>No movies found</h2>
+                            <p>Try different keywords</p>
+                        </div>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                movieList.innerHTML = `
+                    <div style="text-align: center; grid-column: 1/-1;">
+                        <h2>Something went wrong</h2>
+                        <p>Please try again later</p>
+                    </div>`;
+            }
+        }
+
+        function displayMovies(movies) {
+            movieList.innerHTML = movies.map(movie => `
+                <div class="movie-card">
+                    <img src="${movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/350x500?text=No+Poster'}" 
+                         alt="${movie.Title}">
+                    <div class="movie-info">
+                        <h3>${movie.Title}</h3>
+                        <p>Year: ${movie.Year}</p>
+                        <p>Type: ${movie.Type.charAt(0).toUpperCase() + movie.Type.slice(1)}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Add event listener for Enter key
+        movieSearch.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchMovies();
+            }
+        });
+
+        // Loading animation
+        function showLoading() {
+            movieList.innerHTML = `
+                <div style="text-align: center; grid-column: 1/-1;">
+                    <h2>Loading...</h2>
+                </div>`;
+        }
+    </script>
+</body>
+</html>
